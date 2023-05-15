@@ -1,5 +1,7 @@
 # YAPar reader
+# Christian Perez 19710
 
+# funcion para separar una cadena por espacios en blanco y devolver una lista
 def split(line):
     result = []
     word = ""
@@ -11,6 +13,8 @@ def split(line):
             word += char
     result.append(word)
     return result
+
+# funcion para buscar un caracter en una cadena y retornar el indice
 
 
 def find(string, char):
@@ -46,6 +50,8 @@ def delete_white_spaces(string):
         if char != " ":
             result += char
     return result
+
+# borrar saltos de linea de una cadena
 
 
 def delete_jump_line(string):
@@ -83,6 +89,7 @@ def Yapar_reader(archivo):
 
     token_list = []
 
+    # leer tokens
     while '%token' in content:
         index = find2(content, '%token')
         content = content[index + 7:]
@@ -93,7 +100,7 @@ def Yapar_reader(archivo):
 
     # print(token_list)
 
-    # separate tokens if there are more than one in the same line
+    # separar tokens si hay mas de un token en una linea
     for index, token in enumerate(token_list):
         if " " in token:
             x = split(token)
@@ -103,7 +110,7 @@ def Yapar_reader(archivo):
     # print(token_list)
     # print(content)
 
-    # read productions
+    # obtener producciones
     productions = {}
     while content != "":
         index = find2(content, ":\n")
@@ -112,7 +119,7 @@ def Yapar_reader(archivo):
         head = delete_jump_line(head)
         body = content[index + 2:index2]
         body = delete_jump_line(body)
-        print(body)
+        # print(body)
         x = split(body)
         # delete empty strings
         while "" in x:
@@ -136,9 +143,9 @@ def Yapar_reader(archivo):
 
     # get no terminals by getting keys from productions
     no_terminals = list(productions.keys())
-    print(no_terminals)
-    print(productions)
-    print(token_list)
+    # print(no_terminals)
+    # print(productions)
+    # print(token_list)
     return token_list, no_terminals, productions
 
 

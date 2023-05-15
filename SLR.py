@@ -1,3 +1,4 @@
+# Algoritmo para crear un AFD a partir de una gramatica utilizando SLR
 import graphviz
 import copy
 
@@ -29,9 +30,10 @@ class Estado:
         if simbolo in self.transiciones:
             del self.transiciones[simbolo]
 
+# clase que guarda los estados y trancisiones del SLR y dibuja el AFD
+
 
 class SLR:
-
     def __init__(self):
         self.estados = set()
         self.estado_inicial = set()
@@ -69,6 +71,8 @@ class SLR:
             if estado.id == 0:
                 return estado
 
+# clase para identificar simbolos terminales
+
 
 class Terminal:
 
@@ -83,6 +87,8 @@ class Terminal:
 
     def __hash__(self) -> int:
         return hash(self.nombre)
+
+# clase para identificar simbolos no terminales
 
 
 class NoTerminal:
@@ -99,6 +105,8 @@ class NoTerminal:
     def __hash__(self) -> int:
         return hash(self.nombre)
 
+# clase para identificar facilmente el simbolo Punto
+
 
 class Punto:
     def __init__(self):
@@ -109,6 +117,8 @@ class Punto:
 
     def __eq__(self, __value: object) -> bool:
         return isinstance(__value, Punto) and self.nombre == __value.nombre
+
+# clase para guardar las producciones de la gramatica
 
 
 class Produccion:
@@ -131,16 +141,13 @@ class Produccion:
     def get_produccion(self):
         return self.produccion
 
-    def copy(self):
-        return Produccion(self.head, self.produccion.copy())
-
 # cerradura de un estado
 
 
 def cerradura_inicial(gramatica_evaluar, gramatica_inicial):
     gramatica_in = gramatica_inicial.copy()
     gramatica = []
-    # add "." to the first production if it doesn't have it in any of its productions
+    # agregar punto al inicio de la produccion si no tiene. Solo se ejecuta la primera vez que se pasa e'
     for produccion in gramatica_evaluar:
         if Punto() not in produccion.produccion:
             print("no tiene punto")
@@ -148,12 +155,13 @@ def cerradura_inicial(gramatica_evaluar, gramatica_inicial):
             produccion.produccion.insert(0, Punto())
             gramatica.append(produccion)
         else:
-            # shift Punto to the next position in the list of productions
+            # mover el punto a la siguiente posicion en la lista de la produccion
             index = produccion.produccion.index(Punto())
             if index + 1 < len(produccion.produccion):
                 produccion.produccion[index], produccion.produccion[index +
                                                                     1] = produccion.produccion[index + 1], produccion.produccion[index]
                 gramatica.append(produccion)
+    # aplicar cerradura recursivamente hasta que no se pueda agregar mas producciones
 
     def cerradura(gramatica, gramatica_in):
         for produccion in gramatica:
@@ -172,16 +180,15 @@ def cerradura_inicial(gramatica_evaluar, gramatica_inicial):
 
 def ir_a(gramatica, simbolo):
     res = []
-    # print(gramatica)
+    # se busca el punto en la produccion y se busca si existe algun movimiento posible con el simbolo que se esta evaluando
     for produccion in gramatica:
-        # print(str(produccion))
         index = produccion.produccion.index(Punto())
-        # print(index)
-        # print(produccion.produccion[index + 1])
         if index + 1 < len(produccion.produccion):
             if produccion.produccion[index + 1] == simbolo:
                 res.append(produccion)
     return res
+
+# funcion para agregar el simbolo de inicio a la gramatica. Por ejemplo e' -> e
 
 
 def extender_gramatica(gramatica):
@@ -191,12 +198,16 @@ def extender_gramatica(gramatica):
     print(gramatica_extendida)
     return gramatica_extendida
 
+# convertir la lista de terminales en objetos de la clase Terminal
+
 
 def terminales_to_obj(terminales):
     terminales_obj = []
     for terminal in terminales:
         terminales_obj.append(Terminal(terminal))
     return terminales_obj
+
+# convertir la lista de no terminales en objetos de la clase NoTerminal
 
 
 def no_terminales_to_obj(no_terminales):
@@ -205,11 +216,13 @@ def no_terminales_to_obj(no_terminales):
         no_terminales_obj.append(NoTerminal(no_terminal))
     return no_terminales_obj
 
+# convertir la gramatica extendida a objetos de la clase Produccion
+
 
 def gramatica_to_obj(gramatica_extendida, terminales, no_terminales):
     gramatica_inicial = []
     for no_terminal in gramatica_extendida:
-        print(no_terminal)
+        # print(no_terminal)
         for produccion in gramatica_extendida[no_terminal]:
             s = produccion.split()
             prod = []
@@ -222,33 +235,27 @@ def gramatica_to_obj(gramatica_extendida, terminales, no_terminales):
             gramatica_inicial.append(new_prod)
     return gramatica_inicial
 
+# funcion principal para crear el SLR
+
 
 def construccion_slr(gramatica, terminales, no_terminales):
     gramatica_extendida = extender_gramatica(gramatica)
     gramatica_inicial = gramatica_to_obj(
         gramatica_extendida, terminales, no_terminales)
     simbolos = []
+    # a lo largo del algoritmo se utiliza copy.deepcopy para evitar que se modifiquen las listas originales
     alt = copy.deepcopy(no_terminales)
-    # delete the first element of the list
+    # eliminar el elemento 1 de la lista, el cual es el simbolo inicial
     alt.pop(0)
     simbolos.extend(no_terminales_to_obj(alt))
     simbolos.extend(terminales_to_obj(copy.deepcopy(terminales)))
     # print(simbolos)
     l = []
     l.append(copy.deepcopy(gramatica_inicial[0]))
-
+    # se aplica cerradura inicial
     res = cerradura_inicial(l, copy.deepcopy(gramatica_inicial))
-    # res2 = cerradura_inicial(
-    #     ir_a(res, NoTerminal(no_terminales[1])), gramatica_inicial)
-    # for x in res2:
-    #     print(str(x))
-    # id = 0
-    # newEstado = Estado(id, res)
-    # slr = SLR()
-    # slr.estados.add(newEstado)
-    # slr.estado_inicial.add(newEstado)
     estados_por_evaluar = []
-
+    # se crea el estado inicial y se inicia el SLR
     id = 0
     newEstado = Estado(id, res)
     id += 1
@@ -256,80 +263,32 @@ def construccion_slr(gramatica, terminales, no_terminales):
     slr = SLR()
     slr.estados.add(newEstado)
     slr.estado_inicial.add(newEstado)
-
+    # se aplican las reglas del SLR para crear los estados. Mientras haya estados por visitar, se repite el ciclo.
     while len(estados_por_evaluar) > 0:
         estado = estados_por_evaluar.pop(0)
         for simbolo in simbolos:
             gr = ir_a(copy.deepcopy(estado.gramatica), copy.deepcopy(simbolo))
             gr = cerradura_inicial(gr, copy.deepcopy(gramatica_inicial))
+            # se valida que exista al menos una produccion
             if len(gr) > 0:
+                # se valida si el estado ya existe en el SLR para no crearlo de nuevo y se agrega la transicion
                 for x in slr.estados:
                     if gr == x.gramatica:
-                        # for v in gr:
-                        #     print(str(v))
-                        # for v in x.gramatica:
-                        #     print(str(v))
-                        # print("ya existe")
                         estado.agregar_transicion(simbolo, x)
                         break
+                # si el estado no existe en el SLR se crea y se agrega la transicion
                 else:
-                    # for v in gr:
-                    #     print(str(v))
-                    # print("no existe")
                     newEstado = Estado(id, gr)
                     id += 1
                     estado.agregar_transicion(simbolo, newEstado)
                     slr.estados.add(newEstado)
                     estados_por_evaluar.append(newEstado)
 
-    # for x in range(3):
-    #     estado = estados_por_evaluar.pop(0)
-    #     for simbolo in simbolos:
-    #         gr = ir_a(copy.deepcopy(estado.gramatica), copy.deepcopy(simbolo))
-    #         gr = cerradura_inicial(gr, copy.deepcopy(gramatica_inicial))
-    #         if len(gr) > 0:
-    #             for x in slr.estados:
-    #                 if gr == x.gramatica:
-    #                     # for v in gr:
-    #                     #     print(str(v))
-    #                     # for v in x.gramatica:
-    #                     #     print(str(v))
-    #                     # print("ya existe")
-    #                     estado.agregar_transicion(simbolo, x)
-    #                     break
-    #             else:
-    #                 for v in gr:
-    #                     print(str(v))
-    #                 print("no existe")
-    #                 newEstado = Estado(id, gr)
-    #                 id += 1
-    #                 slr.estados.add(newEstado)
-    #                 estados_por_evaluar.append(newEstado)
-
-    # ordenar los estados en slr en orden de estado.id
+    # ordenar los estados en slr en orden de estado.id e imprimirlos en consola
     slr.estados = sorted(slr.estados, key=lambda estado: estado.id)
     for estado in slr.estados:
         print("estado: " + str(estado.id))
         for x in estado.gramatica:
             print(str(x))
-    slr.draw_afd()
+    # devolver slr
     return slr
-
-
-# terminales = ['PLUS', 'TIMES', 'LPAREN', 'RPAREN', 'ID']
-# no_terminales = ["e'", 'e', 't', 'f']
-# gramatica = {'e': ['e PLUS t', 't'], 't': [
-#     't TIMES f', 'f'], 'f': ['LPAREN e RPAREN', 'ID']}
-
-terminales = ['ID', 'PLUS', 'TIMES', 'LPAREN', 'RPAREN']
-no_terminales = ['expression', 'term', 'factor']
-gramatica = {'expression': ['expression PLUS term', 'term'], 'term': [
-    'term TIMES factor', 'factor'], 'factor': ['LPAREN expression RPAREN', 'ID']}
-
-slr = construccion_slr(gramatica, terminales, no_terminales)
-
-# count estados in slr
-# count = 0
-# for estado in slr.estados:
-#     count += 1
-# print(count)
